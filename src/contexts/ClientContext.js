@@ -1,12 +1,23 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { loadState, saveState } from '../utils/storage';
 
 const ClientContext = createContext();
 
 export function ClientProvider({ children }) {
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState(() => loadState('CLIENTS') || []);
+
+  useEffect(() => {
+    saveState('CLIENTS', clients);
+  }, [clients]);
 
   const addClient = (client) => {
     setClients([...clients, { ...client, id: Date.now() }]);
+  };
+
+  const updateClient = (clientId, updatedData) => {
+    setClients(clients.map(client =>
+      client.id === clientId ? { ...client, ...updatedData } : client
+    ));
   };
 
   const deleteClient = (clientId) => {
@@ -14,7 +25,13 @@ export function ClientProvider({ children }) {
   };
 
   return (
-    <ClientContext.Provider value={{ clients, addClient, deleteClient }}>
+    <ClientContext.Provider value={{ 
+      clients, 
+      addClient, 
+      updateClient,
+      deleteClient,
+      totalClients: clients.length 
+    }}>
       {children}
     </ClientContext.Provider>
   );
